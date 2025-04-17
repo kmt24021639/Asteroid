@@ -5,12 +5,23 @@
 int cellSize = 55;
 Game::Game()
 {
+    music = LoadMusicStream("D:/Project game/Asset/music.ogg");
+    ExplosionSound = LoadSound("D:/Project game/Asset/boom.ogg");
+    GameOverSound = LoadSound("D:/Project game/Asset/gameover.ogg");
+    RestartSound = LoadSound("D:/Project game/Asset/restart.ogg");
+    ShipHitSound = LoadSound("D:/Project game/Asset/shiphit.ogg");
+    PlayMusicStream(music);
     InitGame();
 }
 
 Game::~Game()
 {
     Alien::UnloadImages();
+    UnloadMusicStream(music);
+    UnloadSound(ExplosionSound);
+    UnloadSound(GameOverSound);
+    UnloadSound(RestartSound);
+    UnloadSound(ShipHitSound);
 }
 
 void Game::Update()
@@ -181,6 +192,7 @@ void Game::CheckForCollisions()
         auto it = aliens.begin();
         while(it != aliens.end()) {
             if(CheckCollisionRecs(it -> getRect(), laser.getRect())) {
+                PlaySound(ExplosionSound);
                 if(it -> type == 1) {
                     score += 100;
                 } else if (it -> type == 2) {
@@ -210,6 +222,7 @@ void Game::CheckForCollisions()
 
         if(CheckCollisionRecs(mysteryship.getRect(), laser.getRect())) {
             if(mysteryship.alive) {
+                PlaySound(ExplosionSound);
                 score += 500;
             }
             mysteryship.alive = false;
@@ -217,11 +230,24 @@ void Game::CheckForCollisions()
             CheckForHighScore();
             
         }
+
+        if(aliens.empty()){
+            aliens = CreateAliens();
+            alienLaserShootInterval *= 0.9;
+            timeLastSpawn = GetTime();
+            mysteryShipSpawnInterval = GetRandomValue(10, 20);
+            if(lives < 3) {
+                lives++;
+            }
+            level++;
+            PlaySound(RestartSound);
+        }
     }
 
     //Alien laser
     for(auto& laser: alienLasers) {
         if(CheckCollisionRecs(laser.getRect(), spaceship.getRect())) {
+            PlaySound(ShipHitSound);
             laser.active = false;
             lives--;
             if(lives == 0) {
@@ -264,6 +290,7 @@ void Game::CheckForCollisions()
 void Game::GameOver()
 {
     run = false;
+    PlaySound(GameOverSound);
 }
 
 void Game::InitGame()
@@ -314,8 +341,10 @@ int Game::LoadHighScoreFromFile()
 
 void Game::Reset()
 {
+    level = 1;
     spaceship.Reset();
     aliens.clear();
     alienLasers.clear();
     obstacles.clear();
+    PlaySound(RestartSound);
 }
