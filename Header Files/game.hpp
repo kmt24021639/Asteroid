@@ -15,6 +15,9 @@ class Game {
         int lives;
         int score;
         int highscore;
+        int level = 1;
+        Music music;
+        
     private:
         void DeleteInactiveLasers();
         std::vector<Obstacle> CreateObstacles();\
@@ -34,9 +37,13 @@ class Game {
         std::vector<Alien> aliens;
         int alienDirection;
         std::vector<Laser> alienLasers;
-        constexpr static float alienLaserShootInterval = 0.35;
+        float alienLaserShootInterval = 0.35;
         float timeLastAlienFired;
         MysteryShip mysteryship;
         float mysteryShipSpawnInterval;
         float timeLastSpawn;
+        Sound ExplosionSound;
+        Sound GameOverSound;
+        Sound RestartSound;
+        Sound ShipHitSound;
 };
