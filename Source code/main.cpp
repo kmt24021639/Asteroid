@@ -10,6 +10,12 @@ std::string FormatWithLeadingZeros(int number, int width)
     return numberText;
 }
 
+std::string FormatLevel(int number)
+{
+    std::string levelText = std::to_string(number);
+    return "LEVEL 0" + levelText;
+}
+
 int main() 
 {
     //Gameloop
@@ -20,6 +26,8 @@ int main()
     int offset = 50;
 
     InitWindow(windowWidth + offset, windowHeight + offset * 2, "Asteroid");
+    InitAudioDevice();
+
     SetTargetFPS(60);
     Font font = LoadFontEx("D:/Project game/Asset/pixel.ttf", 64, 0, 0);
     Texture2D spaceshipImage = LoadTexture("D:/Project game/Asset/player.png");
@@ -28,6 +36,7 @@ int main()
 
     while(WindowShouldClose() == false)
     {
+        UpdateMusicStream(game.music);
         game.HandleInput();
         game.Update();
         BeginDrawing();
@@ -36,9 +45,11 @@ int main()
         DrawLineEx({25, 780}, {775, 780}, 3, yellow);
         
         if(game.run) {
-            DrawTextEx(font, "LEVEL 01", {570, 790}, 34, 2, yellow);
+            std::string LevelText = FormatLevel(game.level);
+            DrawTextEx(font, LevelText.c_str(), {570, 790}, 34, 2, yellow);
         } else {
             DrawTextEx(font, "GAME OVER", {570, 790}, 34, 2, yellow);
+            DrawTextEx(font, "PRESS ENTER TO RESTART", {50, 790}, 34, 2, yellow);
         }
 
         float x = 50.0;
@@ -60,4 +71,5 @@ int main()
     }
     
     CloseWindow();
+    CloseAudioDevice();
 }
