@@ -50,6 +50,9 @@ void Game::Update()
         mysteryship.Update();
 
         CheckForCollisions();
+        
+        LevelUpdate();
+
     } else {
         if(IsKeyDown(KEY_ENTER)) {
             Reset();
@@ -230,18 +233,6 @@ void Game::CheckForCollisions()
             CheckForHighScore();
             
         }
-
-        if(aliens.empty()){
-            aliens = CreateAliens();
-            alienLaserShootInterval *= 0.9;
-            timeLastSpawn = GetTime();
-            mysteryShipSpawnInterval = GetRandomValue(10, 20);
-            if(lives < 3) {
-                lives++;
-            }
-            level++;
-            PlaySound(RestartSound);
-        }
     }
 
     //Alien laser
@@ -337,6 +328,48 @@ int Game::LoadHighScoreFromFile()
         std::cerr << "Failed to load highscore from file." << std::endl;
     }
     return loadedHighScore;
+}
+
+void Game::LevelUpdate()
+{
+    if(run) {
+        if(level % 3 == 0) {
+            obstacles = CreateObstacles();
+        }
+    }
+    
+    switch (level % 5)
+    {
+    case 1:
+        ThemeColor = yellow;
+        break;
+    case 2:
+        ThemeColor = green;
+        break;
+    case 3:
+        ThemeColor = red;
+        break;
+    case 4:
+        ThemeColor = blue;
+        break;
+    case 0:
+        ThemeColor = pink;
+        break;
+    default:
+        break;
+    }
+
+    if(aliens.empty()){
+        aliens = CreateAliens();
+        alienLaserShootInterval *= 0.9;
+        timeLastSpawn = GetTime();
+        mysteryShipSpawnInterval = GetRandomValue(10, 20);
+        if(lives < 3) {
+            lives++;
+        }
+        level++;
+        PlaySound(RestartSound);
+    }
 }
 
 void Game::Reset()
