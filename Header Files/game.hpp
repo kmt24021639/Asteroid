@@ -17,7 +17,12 @@ class Game {
         int highscore;
         int level = 1;
         Music music;
-        
+        Color ThemeColor;
+        Color yellow = {243, 216, 63, 255};
+        Color green = {72, 251, 0, 255};
+        Color red = {255, 63, 63, 255};
+        Color blue = {43, 209, 252, 255};
+        Color pink = {255, 72, 196, 255};
     private:
         void DeleteInactiveLasers();
         std::vector<Obstacle> CreateObstacles();\
@@ -32,6 +37,7 @@ class Game {
         void CheckForHighScore();
         void SaveHighScoreToFile(int highscore);
         int LoadHighScoreFromFile();
+        void LevelUpdate();
         Spaceship spaceship;
         std::vector<Obstacle> obstacles;
         std::vector<Alien> aliens;
