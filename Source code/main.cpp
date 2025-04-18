@@ -20,7 +20,7 @@ int main()
 {
     //Gameloop
     Color grey = {29, 29, 27, 255};
-    Color yellow ={243, 216, 63, 255};
+    
     int windowWidth = 750;
     int windowHeight = 750;
     int offset = 50;
@@ -41,15 +41,15 @@ int main()
         game.Update();
         BeginDrawing();
         ClearBackground(grey);
-        DrawRectangleRoundedLinesEx({10, 10, 780, 830}, 0.18f, 20, 2, yellow);
-        DrawLineEx({25, 780}, {775, 780}, 3, yellow);
+        DrawRectangleRoundedLinesEx({10, 10, 780, 830}, 0.18f, 20, 2, game.ThemeColor);
+        DrawLineEx({25, 780}, {775, 780}, 3, game.ThemeColor);
         
         if(game.run) {
             std::string LevelText = FormatLevel(game.level);
-            DrawTextEx(font, LevelText.c_str(), {570, 790}, 34, 2, yellow);
+            DrawTextEx(font, LevelText.c_str(), {570, 790}, 34, 2, game.ThemeColor);
         } else {
-            DrawTextEx(font, "GAME OVER", {570, 790}, 34, 2, yellow);
-            DrawTextEx(font, "PRESS ENTER TO RESTART", {50, 790}, 34, 2, yellow);
+            DrawTextEx(font, "GAME OVER", {570, 790}, 34, 2, game.ThemeColor);
+            DrawTextEx(font, "PRESS ENTER TO RESTART", {50, 790}, 34, 2, game.ThemeColor);
         }
 
         float x = 50.0;
@@ -58,13 +58,13 @@ int main()
             x += 70;
         }
 
-        DrawTextEx(font, "SCORE", {50, 25}, 34, 2, yellow);
+        DrawTextEx(font, "SCORE", {50, 25}, 34, 2, game.ThemeColor);
         std::string scoreText = FormatWithLeadingZeros(game.score, 5);
-        DrawTextEx(font, scoreText.c_str(), {50, 50}, 34, 2, yellow);
+        DrawTextEx(font, scoreText.c_str(), {50, 50}, 34, 2, game.ThemeColor);
         
-        DrawTextEx(font, "HI-SCORE", {570, 25}, 34, 2, yellow);
+        DrawTextEx(font, "HI-SCORE", {570, 25}, 34, 2, game.ThemeColor);
         std::string highscoreText = FormatWithLeadingZeros(game.highscore, 5);
-        DrawTextEx(font, highscoreText.c_str(), {600, 50}, 34, 2, yellow);
+        DrawTextEx(font, highscoreText.c_str(), {600, 50}, 34, 2, game.ThemeColor);
 
         game.Draw();
         EndDrawing();
