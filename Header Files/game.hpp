@@ -3,6 +3,7 @@
 #include "obstacle.hpp"
 #include "alien.hpp"
 #include "mysteryship.hpp"
+#include "powerup.hpp"
 
 class Game {
     public:
@@ -12,10 +13,13 @@ class Game {
         void Update();
         void HandleInput();
         bool run;
-        int lives;
+        int playerlives;
         int score;
         int highscore;
         int level = 1;
+        int alienlives1;
+        int alienlives2;
+        int alienlives3;
         Music music;
         Color ThemeColor;
         Color yellow = {243, 216, 63, 255};
@@ -23,9 +27,15 @@ class Game {
         Color red = {255, 63, 63, 255};
         Color blue = {43, 209, 252, 255};
         Color pink = {255, 72, 196, 255};
+        Texture2D spaceshipImage = LoadTexture("D:/Project game/Asset/Ship/player.png");
+        Texture2D blasterImage = LoadTexture("D:/Project game/Asset/PowerUp/blaster.png");
+        Texture2D flasherImage = LoadTexture("D:/Project game/Asset/PowerUp/flasher.png");
+        Texture2D tripleshootImage = LoadTexture("D:/Project game/Asset/PowerUp/tripleshoot.png");
+        Texture2D shieldImage = LoadTexture("D:/Project game/Asset/PowerUp/shield.png");
+        Texture2D xtremeImage = LoadTexture("D:/Project game/Asset/PowerUp/xtreme.png");
     private:
         void DeleteInactiveLasers();
-        std::vector<Obstacle> CreateObstacles();\
+        std::vector<Obstacle> CreateObstacles();
         std::vector<Alien> CreateAliens();
         void MoveAliens();
         void MoveDownAliens(int distance);
@@ -37,6 +47,7 @@ class Game {
         void CheckForHighScore();
         void SaveHighScoreToFile(int highscore);
         int LoadHighScoreFromFile();
+        void SpawnPowerUp();
         void LevelUpdate();
         Spaceship spaceship;
         std::vector<Obstacle> obstacles;
@@ -48,8 +59,14 @@ class Game {
         MysteryShip mysteryship;
         float mysteryShipSpawnInterval;
         float timeLastSpawn;
+        std::vector<PowerUp> powerups;
+        std::vector<int> usedPowerUpTypes;
+        int powerUpCount = 0;
+        int currentLevel;
         Sound ExplosionSound;
         Sound GameOverSound;
         Sound RestartSound;
         Sound ShipHitSound;
+        Sound ShieldHitSound;
+        Sound PowerUpSound;
 };
