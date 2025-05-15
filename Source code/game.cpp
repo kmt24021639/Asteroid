@@ -1,15 +1,18 @@
 #include "game.hpp"
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 int cellSize = 55;
 Game::Game()
 {
-    music = LoadMusicStream("D:/Project game/Asset/music.ogg");
-    ExplosionSound = LoadSound("D:/Project game/Asset/boom.ogg");
-    GameOverSound = LoadSound("D:/Project game/Asset/gameover.ogg");
-    RestartSound = LoadSound("D:/Project game/Asset/restart.ogg");
-    ShipHitSound = LoadSound("D:/Project game/Asset/shiphit.ogg");
+    music = LoadMusicStream("D:/Project game/Asset/Sound/music.ogg");
+    ExplosionSound = LoadSound("D:/Project game/Asset/Sound/boom.ogg");
+    GameOverSound = LoadSound("D:/Project game/Asset/Sound/gameover.ogg");
+    RestartSound = LoadSound("D:/Project game/Asset/Sound/restart.ogg");
+    ShipHitSound = LoadSound("D:/Project game/Asset/Sound/shiphit.ogg");
+    ShieldHitSound = LoadSound("D:/Project game/Asset/Sound/ting.ogg");
+    PowerUpSound = LoadSound("D:/Project game/Asset/Sound/powerup.ogg");
     PlayMusicStream(music);
     InitGame();
 }
@@ -33,7 +36,13 @@ void Game::Update()
             timeLastSpawn = GetTime();
             mysteryShipSpawnInterval = GetRandomValue(10, 20);
         }
-
+        
+        float x = 50;
+        for(int i = 1; i <= playerlives; i++) {
+            DrawTextureV(spaceshipImage, {x, 795}, WHITE);
+            x+= 70;
+        }
+        
         for(auto& laser: spaceship.lasers) {
             laser.Update();
         }
@@ -47,12 +56,38 @@ void Game::Update()
         }
 
         DeleteInactiveLasers();
+
         mysteryship.Update();
+
+        for(auto& powerup: powerups) {
+            powerup.Update(4);
+        }
 
         CheckForCollisions();
         
         LevelUpdate();
+        
+        if(playerlives > 0) {
+            if(spaceship.PUblaster){
+                DrawTextureV(blasterImage, {273 + 51 * 4, 795}, WHITE);
+            } 
 
+            if(spaceship.PUFflasher){
+                DrawTextureV(flasherImage, {273 + 51, 795}, WHITE);
+            } 
+
+            if(spaceship.PUshield){
+                DrawTextureV(shieldImage, {273 + 51 * 2, 795}, WHITE);
+            }
+
+            if(spaceship.PUtripleshoot){
+                DrawTextureV(tripleshootImage, {273 + 51 * 3, 795}, WHITE);
+            } 
+
+            if(spaceship.PUxtreme){
+                DrawTextureV(xtremeImage, {273, 795}, WHITE);
+            }
+        }
     } else {
         if(IsKeyDown(KEY_ENTER)) {
             Reset();
@@ -82,6 +117,10 @@ void Game::Draw()
     }
 
     mysteryship.Draw();
+
+    for(auto& powerup: powerups) {
+        powerup.Draw();
+    }
 }
 
 void Game::HandleInput()
@@ -131,22 +170,32 @@ std::vector<Obstacle> Game::CreateObstacles()
 std::vector<Alien> Game::CreateAliens()
 {
     std::vector<Alien> aliens;
-    
+    alienlives1 = 1 + level / 5;
+    alienlives2 = 1 + level / 3;
+    alienlives3 = 1 + level / 2;
+    if (alienlives1 > 2) alienlives1 = 2;
+    if (alienlives2 > 3) alienlives2 = 3;
+    if (alienlives3 > 4) alienlives3 = 4;
     for(int row = 0; row < 6; row++) {
         for(int column = 0; column < 11; column++) {
-            
             int alienType;
+            int alienLives;
             if(row == 0 || row == 1) {
                 alienType = 3;
+                alienLives = alienlives3;
             } else if (row == 2 || row == 3) {
                 alienType = 2;
+                alienLives = alienlives2;
             } else {
                 alienType = 1;
+                alienLives = alienlives1;
             }
 
             float x = 75 + column * cellSize;
             float y = 110 + row * cellSize;
-            aliens.push_back(Alien(alienType, {x, y}));
+            Alien newAlien(alienType, {x, y});
+            newAlien.lives = alienLives;
+            aliens.push_back(newAlien);
         }
     }
     return aliens;
@@ -195,21 +244,28 @@ void Game::CheckForCollisions()
         auto it = aliens.begin();
         while(it != aliens.end()) {
             if(CheckCollisionRecs(it -> getRect(), laser.getRect())) {
-                PlaySound(ExplosionSound);
-                if(it -> type == 1) {
-                    score += 100;
-                } else if (it -> type == 2) {
-                    score += 200;
+                it->lives--;
+                laser.active = false;
+    
+                if(it->lives <= 0) {
+                    if(it -> type == 1) {
+                        score += 100;
+                    } else if (it -> type == 2) {
+                        score += 200;
+                    } else {
+                        score += 300;
+                    }
+                    it = aliens.erase(it);
+                    PlaySound(ExplosionSound);
                 } else {
-                    score += 300;
+                    it++;
                 }
                 CheckForHighScore();
-                it = aliens.erase(it);
-                laser.active = false;
             } else {
                 ++it;
             }
         }
+        
 
         for(auto& obstacle: obstacles) {
             auto it = obstacle.blocks.begin();
@@ -238,10 +294,20 @@ void Game::CheckForCollisions()
     //Alien laser
     for(auto& laser: alienLasers) {
         if(CheckCollisionRecs(laser.getRect(), spaceship.getRect())) {
-            PlaySound(ShipHitSound);
+            
             laser.active = false;
-            lives--;
-            if(lives == 0) {
+            if(!spaceship.PUshield) {
+                playerlives--;
+                PlaySound(ShipHitSound);
+            }
+            if(spaceship.PUshield) {
+                PlaySound(ShieldHitSound);
+                score += 10;
+                if(level > currentLevel) {
+                    spaceship.PUshield = false;
+                }
+            }
+            if(playerlives == 0) {
                 GameOver();
             }
         }
@@ -276,6 +342,43 @@ void Game::CheckForCollisions()
             GameOver();
         }
     }
+
+    //power up
+    for(auto it = powerups.begin(); it != powerups.end();) {
+        if(CheckCollisionRecs(it->getRect(), spaceship.getRect())) {
+            switch (it -> GetType())
+            {
+            case 1:
+                spaceship.PUblaster = true;
+                spaceship.ShootTime /= 2;
+                PlaySound(PowerUpSound);
+                break;
+            case 2:
+                spaceship.PUFflasher = true;
+                spaceship.LaserSpeed *= 2;
+                PlaySound(PowerUpSound);
+                break;
+            case 3:
+                spaceship.PUshield = true;
+                PlaySound(PowerUpSound);
+                currentLevel = level;
+                break;
+            case 4:
+                spaceship.PUtripleshoot = true;
+                PlaySound(PowerUpSound);
+                break;
+            case 5:
+                spaceship.PUxtreme = true;
+                PlaySound(PowerUpSound);
+                break;
+            default:
+                break;
+            }         
+            it = powerups.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void Game::GameOver()
@@ -291,11 +394,20 @@ void Game::InitGame()
     alienDirection = 1;
     timeLastAlienFired = 0.0;
     timeLastSpawn = 0.0;
-    lives = 3;
+    playerlives = 3;
     score = 0;
+    level = 1;
     highscore = LoadHighScoreFromFile();
     run = true;
     mysteryShipSpawnInterval = GetRandomValue(10, 20);
+    powerUpCount = 0;
+    spaceship.ShootTime = 0.35;
+    spaceship.LaserSpeed = 7;
+    spaceship.PUtripleshoot = false;
+    spaceship.PUxtreme = true;
+    spaceship.PUshield = false;
+    spaceship.PUblaster = false;
+    spaceship.PUFflasher = false;
 }
 
 void Game::CheckForHighScore()
@@ -330,45 +442,76 @@ int Game::LoadHighScoreFromFile()
     return loadedHighScore;
 }
 
-void Game::LevelUpdate()
+void Game::SpawnPowerUp()
 {
-    if(run) {
-        if(level % 3 == 0) {
-            obstacles = CreateObstacles();
+    if(powerUpCount >= 5) return;
+
+    std::vector<int> availableTypes;
+    for(int i = 1; i <= 5; ++i) {
+        if(std::find(usedPowerUpTypes.begin(), usedPowerUpTypes.end(), i) == usedPowerUpTypes.end()) {
+            availableTypes.push_back(i);
         }
-    }
-    
-    switch (level % 5)
-    {
-    case 1:
-        ThemeColor = yellow;
-        break;
-    case 2:
-        ThemeColor = green;
-        break;
-    case 3:
-        ThemeColor = red;
-        break;
-    case 4:
-        ThemeColor = blue;
-        break;
-    case 0:
-        ThemeColor = pink;
-        break;
-    default:
-        break;
     }
 
-    if(aliens.empty()){
-        aliens = CreateAliens();
-        alienLaserShootInterval *= 0.9;
-        timeLastSpawn = GetTime();
-        mysteryShipSpawnInterval = GetRandomValue(10, 20);
-        if(lives < 3) {
-            lives++;
+    if(!availableTypes.empty()) {
+        int randomIndex = GetRandomValue(0, availableTypes.size() - 1);
+        int selectedType = availableTypes[randomIndex];
+
+        usedPowerUpTypes.push_back(selectedType);
+
+        float x = GetRandomValue(50, GetScreenWidth() - 50);
+        Vector2 position = {x, 0};
+        powerups.push_back(PowerUp(selectedType, position));
+
+        powerUpCount++;
+
+        if(usedPowerUpTypes.size() >= 5) {
+            usedPowerUpTypes.clear();
         }
-        level++;
-        PlaySound(RestartSound);
+    }
+}
+
+void Game::LevelUpdate() {
+    if (run) {
+        if (level % 3 == 0) {
+            obstacles.clear();
+            obstacles = CreateObstacles();
+        }
+
+        switch (level % 5)
+        {
+        case 1:
+            ThemeColor = yellow;
+            break;
+        case 2:
+            ThemeColor = green;
+            break;
+        case 3:
+            ThemeColor = red;
+            break;
+        case 4:
+            ThemeColor = blue;
+            break;
+        case 0:
+            ThemeColor = pink;
+            break;
+        default:
+            break;
+        }
+
+        if(aliens.empty()){
+            aliens = CreateAliens();
+            alienLaserShootInterval *= 0.95;
+            timeLastSpawn = GetTime();
+            mysteryShipSpawnInterval = GetRandomValue(10, 20);
+            if(playerlives < 3) {
+                playerlives++;
+            }
+            level++;
+            spaceship.lasers.clear();
+            SpawnPowerUp();
+            PlaySound(RestartSound);
+        }
     }
 }
 
@@ -380,4 +523,5 @@ void Game::Reset()
     alienLasers.clear();
     obstacles.clear();
     PlaySound(RestartSound);
+    powerUpCount = 0;
 }
