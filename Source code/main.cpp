@@ -16,6 +16,7 @@ std::string FormatLevel(int number)
     return "LEVEL 0" + levelText;
 }
 
+
 int main() 
 {
     //Gameloop
@@ -24,13 +25,14 @@ int main()
     int windowWidth = 750;
     int windowHeight = 750;
     int offset = 50;
+    
 
     InitWindow(windowWidth + offset, windowHeight + offset * 2, "Asteroid");
     InitAudioDevice();
 
     SetTargetFPS(60);
-    Font font = LoadFontEx("D:/Project game/Asset/pixel.ttf", 64, 0, 0);
-    Texture2D spaceshipImage = LoadTexture("D:/Project game/Asset/player.png");
+    Font font = LoadFontEx("D:/Project game/Asset/Font/pixel.ttf", 64, 0, 0);
+    
 
     Game game;
 
@@ -51,12 +53,7 @@ int main()
             DrawTextEx(font, "GAME OVER", {570, 790}, 34, 2, game.ThemeColor);
             DrawTextEx(font, "PRESS ENTER TO RESTART", {50, 790}, 34, 2, game.ThemeColor);
         }
-
-        float x = 50.0;
-        for(int i = 0; i < game.lives; i++) {
-            DrawTextureV(spaceshipImage, {x, 795}, WHITE);
-            x += 70;
-        }
+        
 
         DrawTextEx(font, "SCORE", {50, 25}, 34, 2, game.ThemeColor);
         std::string scoreText = FormatWithLeadingZeros(game.score, 5);
